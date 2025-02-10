@@ -3,7 +3,7 @@ use crate::prelude::*;
 
 use redis::{Client, Commands};
 
-const YEAR_IN_SECS: usize = 365 * 60 * 60 * 24;
+const YEAR_IN_SECS: u64 = 365 * 60 * 60 * 24;
 
 impl SessionManager for Client {
     #[throws(Error)]
@@ -14,7 +14,7 @@ impl SessionManager for Client {
     #[throws(Error)]
     fn insert_for(&self, id: i32, key: String, time: Duration) {
         let mut cnn = self.get_connection()?;
-        cnn.set_ex(id, key, time.as_secs() as usize)?;
+        cnn.set_ex(id, key, time.as_secs())?;
     }
     #[throws(Error)]
     fn remove(&self, id: i32) {
