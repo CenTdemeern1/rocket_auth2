@@ -14,7 +14,7 @@ pub struct Login {
 pub struct Signup {
     #[validate(email)]
     pub email: String,
-    #[validate(length(min = 8), custom(function = "is_secure"))]
+    #[validate(custom(function = "is_password_secure"))]
     pub(crate) password: String,
 }
 impl Debug for Signup {
@@ -63,7 +63,7 @@ impl<T: Deref<Target = Signup>> From<T> for Login {
     }
 }
 #[throws(ValidationError)]
-pub(crate) fn is_secure(password: &str) {
+pub fn is_password_secure(password: &str) {
     is_long(password)?;
     has_uppercase(password)?;
     has_lowercase(password)?;

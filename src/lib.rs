@@ -134,6 +134,7 @@
 //! }
 //! ```
 
+extern crate core;
 
 mod cookies;
 mod db;

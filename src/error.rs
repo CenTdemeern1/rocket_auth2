@@ -54,6 +54,11 @@ pub enum Error {
     #[error("RusqliteError: {0}")]
     RusqliteError(#[from] rusqlite::Error),
 
+    /// A wrapper around [`sled::Error`].
+    #[cfg(feature = "sled")]
+    #[error("SledError: {0}")]
+    SledError(#[from] sled::Error),
+
     /// A wrapper around [`redis::RedisError`].
     #[cfg(feature = "redis")]
     #[error("RedisError")]
@@ -72,6 +77,16 @@ pub enum Error {
     #[cfg(feature = "tokio-postgres")]
     #[error("TokioPostgresError: {0}")]
     TokioPostgresError(#[from] tokio_postgres::Error),
+
+    /// A wrapper around [`bson::ser::Error`].
+    #[cfg(feature = "sled")]
+    #[error("BsonSerializeError: {0}")]
+    BsonSerializeError(#[from] bson::ser::Error),
+
+    /// A wrapper around [`bson::de::Error`].
+    #[cfg(feature = "sled")]
+    #[error("BsonDeserializeError: {0}")]
+    BsonDeserializeError(#[from] bson::de::Error),
 }
 
 /*****  CONVERSIONS  *****/
@@ -81,6 +96,16 @@ use std::sync::PoisonError;
 impl<T> From<PoisonError<T>> for Error {
     fn from(_error: PoisonError<T>) -> Error {
         Error::MutexPoisonError
+    }
+}
+
+#[cfg(feature = "sled")]
+impl From<sled::transaction::TransactionError<Error>> for Error {
+    fn from(value: sled::transaction::TransactionError<Error>) -> Self {
+        match value {
+            sled::transaction::TransactionError::Abort(e) => e,
+            sled::transaction::TransactionError::Storage(e) => e.into(),
+        }
     }
 }
 

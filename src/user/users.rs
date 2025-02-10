@@ -1,8 +1,6 @@
 use super::rand_string;
 use crate::db::DBConnection;
 use crate::prelude::*;
-
-#[cfg(feature = "rusqlite")]
 use std::path::Path;
 
 impl Users {
@@ -149,6 +147,29 @@ impl Users {
         Ok(users)
     }
 
+    /// It creates a `Users` instance by connecting  it to a sled database.
+    /// This method uses the [`sled`] crate.
+    /// If the database does not yet exist it will attempt to create it. By default,
+    /// sessions will be stored on a concurrent HashMap. In order to have persistent sessions see
+    /// the method [`open_redis`](Users::open_redis).
+    /// ```rust, no_run
+    /// # use rocket_auth::{Error, Users};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result <(), Error> {
+    /// let users = Users::open_sled("database/")?;
+    ///
+    /// rocket::build()
+    ///     .manage(users)
+    ///     .launch()
+    ///     .await;
+    /// # Ok(()) }
+    /// ```
+    #[cfg(feature = "sled")]
+    pub fn open_sled(path: impl AsRef<Path>) -> Result<Self, Error> {
+        let db = sled::open(path)?;
+        Ok(db.into())
+    }
+
     /// It queries a user by their email.
     /// ```
     /// # use rocket::{State, get};
@@ -179,7 +200,6 @@ impl Users {
     /// ```
     pub async fn get_by_id(&self, user_id: i32) -> Result<User, Error> {
         self.conn.get_user_by_id(user_id).await
-
     }
 
     /// Inserts a new user in the database. It will fail if the user already exists.
@@ -193,7 +213,12 @@ impl Users {
     /// }
     /// # fn main() {}
     /// ```
-    pub async fn create_user(&self, email: &str, password: &str, is_admin: bool) -> Result<(), Error> {
+    pub async fn create_user(
+        &self,
+        email: &str,
+        password: &str,
+        is_admin: bool,
+    ) -> Result<(), Error> {
         let password = password.as_bytes();
         let salt = rand_string(30);
         let config = argon2::Config::default();
