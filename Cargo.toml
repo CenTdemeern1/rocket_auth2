@@ -3,7 +3,7 @@ name = "rocket_auth"
 version = "0.5.1"
 authors = ["tvallotton@uc.cl", "michalmoczulski1a@gmail.com"]
 edition = "2021"
-license = "MIT or Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "A high level authentication management library for Rocket applications. It supports both SQLite and Postgres."
 repository = "https://github.com/michalmoc/rocket_auth"
 
