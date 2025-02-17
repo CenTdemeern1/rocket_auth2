@@ -18,7 +18,7 @@ The available features are:
 This means that in order for cookies to be properly decrypted between launches, a `secret_key` must be set.
 For more information visit rocket's [configuration guide](https://rocket.rs/v0.5-rc/guide/configuration/#configuration).
 
-To use `rocket_auth` include it as a dependency in your Cargo.toml file:
+To use `rocket_auth2` include it as a dependency in your Cargo.toml file:
 
 ```ini
 [dependencies.rocket_auth2]
