@@ -1,5 +1,5 @@
 use rocket::{form::*, get, post, response::Redirect, routes, State};
-use rocket_auth::{prelude::Error, *};
+use rocket_auth2::{prelude::Error, *};
 use rocket_dyn_templates::Template;
 use serde_json::json;
 use sqlx::{postgres::PgPool, *};
@@ -61,7 +61,7 @@ async fn show_all_users(conn: &State<PgPool>, user: Option<User>) -> Result<Temp
 async fn main() -> Result<(), Error> {
     let conn = PgPool::connect("postgres://user:password@localhost/").await?;
     let users: Users = conn.clone().into();
-    users.create_table().await?; 
+    users.create_table().await?;
     let _ = rocket::build()
         .mount(
             "/",

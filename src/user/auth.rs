@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use regex::Regex;
 use rocket::http::Status;
 use rocket::http::{Cookie, CookieJar};
 use rocket::request::FromRequest;
@@ -7,20 +8,16 @@ use rocket::Request;
 use rocket::State;
 use serde_json::json;
 use std::time::Duration;
-use regex::Regex;
 
-
-
-    /// Validates an email address (helper function).
+/// Validates an email address (helper function).
 pub fn validate_email(email: &String) -> bool {
     let expr = Regex::new("^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,6}$");
 
     if let Ok(reg_ex) = expr {
-        return reg_ex.is_match(&email)
+        return reg_ex.is_match(&email);
     } else {
-        return false
+        return false;
     }
-    
 }
 
 /// The [`Auth`] guard allows to log in, log out, sign up, modify, and delete the currently (un)authenticated user.
@@ -29,7 +26,7 @@ pub fn validate_email(email: &String) -> bool {
 /// ```rust,no_run
 ///
 /// use rocket::{*, form::Form};
-/// use rocket_auth::{Users, Error, Auth, Signup, Login};
+/// use rocket_auth2::{Users, Error, Auth, Signup, Login};
 ///
 /// #[post("/signup", data="<form>")]
 /// async fn signup(form: Form<Signup>, auth: Auth<'_>) {
@@ -96,7 +93,7 @@ impl<'a> Auth<'a> {
     /// For a custom expiration date use [`Auth::login_for`].
     /// ```rust
     /// # use rocket::{get, post, form::Form};
-    /// # use rocket_auth::{Auth, Login};
+    /// # use rocket_auth2::{Auth, Login};
     /// #[post("/login", data="<form>")]
     /// fn login(form: Form<Login>, auth: Auth) {
     ///     auth.login(&form);
@@ -119,7 +116,7 @@ impl<'a> Auth<'a> {
     /// Logs a user in for the specified period of time.
     /// ```rust
     /// # use rocket::{post, form::Form};
-    /// # use rocket_auth::{Login, Auth};
+    /// # use rocket_auth2::{Login, Auth};
     /// # use std::time::Duration;
     /// #[post("/login", data="<form>")]
     /// fn login(form: Form<Login>, auth: Auth) {
@@ -147,7 +144,7 @@ impl<'a> Auth<'a> {
     /// In order to authenticate the user, cast the signup form to a login form or use `signup_for`.
     /// ```rust
     /// # use rocket::{post, form::Form};
-    /// # use rocket_auth::{Auth, Signup, Error};
+    /// # use rocket_auth2::{Auth, Signup, Error};
     /// # use std::time::Duration;
     /// #[post("/signup", data="<form>")]
     /// async fn signup(form: Form<Signup>, auth: Auth<'_>) -> Result<&'static str, Error>{
@@ -165,7 +162,7 @@ impl<'a> Auth<'a> {
     /// The session will last the specified period of time.
     /// ```rust
     /// # use rocket::{post, form::Form};
-    /// # use rocket_auth::{Auth, Signup};
+    /// # use rocket_auth2::{Auth, Signup};
     /// # use std::time::Duration;
     /// #[post("/signup", data="<form>")]
     /// fn signup_for(form: Form<Signup>, auth: Auth) {
@@ -184,7 +181,7 @@ impl<'a> Auth<'a> {
     /// It allows to know if the current client is authenticated or not.
     /// ```rust
     /// # use rocket::{get};
-    /// # use rocket_auth::{Auth};
+    /// # use rocket_auth2::{Auth};
     /// #[get("/am-I-authenticated")]
     /// fn is_auth(auth: Auth<'_>) -> &'static str {
     ///     if auth.is_auth() {
@@ -206,7 +203,7 @@ impl<'a> Auth<'a> {
     /// It retrieves the current logged user.  
     /// ```
     /// # use rocket::get;
-    /// # use rocket_auth::Auth;
+    /// # use rocket_auth2::Auth;
     /// #[get("/display-me")]
     /// async fn display_me(auth: Auth<'_>) -> String {
     ///     format!("{:?}", auth.get_user().await)
@@ -227,7 +224,7 @@ impl<'a> Auth<'a> {
     /// Logs the currently authenticated user out.
     /// ```rust
     /// # use rocket::post;
-    /// # use rocket_auth::Auth;
+    /// # use rocket_auth2::Auth;
     /// #[post("/logout")]
     /// fn logout(auth: Auth)  {
     ///     auth.logout();
@@ -242,7 +239,7 @@ impl<'a> Auth<'a> {
     /// Deletes the account of the currently authenticated user.
     /// ```rust
     /// # use rocket::post;
-    /// # use rocket_auth::Auth;
+    /// # use rocket_auth2::Auth;
     /// #[post("/delete-my-account")]
     /// fn delete(auth: Auth)  {
     ///     auth.delete();
@@ -261,7 +258,7 @@ impl<'a> Auth<'a> {
 
     /// Changes the password of the currently authenticated user
     /// ```
-    /// # use rocket_auth::Auth;
+    /// # use rocket_auth2::Auth;
     /// # use rocket::post;
     /// # #[post("/change")]
     /// # fn example(auth: Auth<'_>) {
@@ -283,7 +280,7 @@ impl<'a> Auth<'a> {
 
     /// Changes the email of the currently authenticated user
     /// ```
-    /// # use rocket_auth::Auth;
+    /// # use rocket_auth2::Auth;
     /// # fn func(auth: Auth) {
     /// auth.change_email("new@email.com".into());
     /// # }
@@ -291,15 +288,15 @@ impl<'a> Auth<'a> {
     pub async fn change_email(&self, email: String) -> Result<(), Error> {
         if self.is_auth() {
             if !validate_email(&email) {
-                return Err(Error::InvalidEmailAddressError)
+                return Err(Error::InvalidEmailAddressError);
             }
             let session = self.get_session()?;
             let mut user = self.users.get_by_id(session.id).await?;
             user.email = email.to_lowercase();
             self.users.modify(&user).await?;
-            return Ok(())
+            return Ok(());
         } else {
-            return Err(Error::UnauthorizedError)
+            return Err(Error::UnauthorizedError);
         }
     }
 
@@ -307,7 +304,7 @@ impl<'a> Auth<'a> {
     /// It is intended to be used primarily
     /// with the `?` operator.
     /// ```
-    /// # fn func(auth: rocket_auth::Auth) -> Result<(), rocket_auth::Error> {
+    /// # fn func(auth: rocket_auth2::Auth) -> Result<(), rocket_auth2::Error> {
     /// auth.get_session()?;
     /// # Ok(())
     /// # }
@@ -324,7 +321,7 @@ impl<'a> Auth<'a> {
     #[throws(Error)]
     pub async fn compare_password(&self, password: &str) -> bool {
         if self.is_auth() {
-            let session = self.get_session()?; 
+            let session = self.get_session()?;
             let user: User = self.users.get_by_id(session.id).await?;
             user.compare_password(password)?
         } else {
@@ -333,17 +330,13 @@ impl<'a> Auth<'a> {
     }
 }
 
-
-
 #[cfg(test)]
 mod test {
 
     use super::validate_email;
 
-
     #[test]
     fn test_validate_email() {
-
         let good_mail = String::from("some.example@gmail.com");
         let bad_mail = String::from("@fak,.r");
         assert!(validate_email(&good_mail));
