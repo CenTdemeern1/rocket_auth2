@@ -1,10 +1,10 @@
-use super::auth::{Auth, validate_email};
+use super::auth::{validate_email, Auth};
 use super::rand_string;
 
+use crate::error;
 use crate::prelude::*;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
-use crate::error;
 
 impl User {
     /// This method allows to reset the password of a user.
@@ -13,7 +13,7 @@ impl User {
     /// In case the user is authenticated,
     /// you can change it more easily with [`change_password`](`super::auth::Auth::change_password`).
     /// This function will fail in case the password is not secure enough.
-    /// 
+    ///
     /// ```rust
     /// use rocket::{State, post};
     /// use rocket_auth::{Error, Users, User};
@@ -25,7 +25,7 @@ impl User {
     /// }
     /// ```
     pub fn set_password(&mut self, new: &str) -> Result<(), Box<dyn std::error::Error>> {
-        crate::forms::is_secure(new)?;
+        crate::forms::is_password_secure(new)?;
         let password = new.as_bytes();
         let salt = rand_string(10);
         let config = argon2::Config::default();
@@ -38,7 +38,7 @@ impl User {
     /// Useful for checking password before resetting email/password.
     /// To avoid bruteforcing this function should not be directly accessible from a route.
     /// Additionally, it is good to implement rate limiting on routes using this function.
-    
+
     pub fn compare_password(&self, password: &str) -> Result<bool, argon2::Error> {
         verify_encoded(&self.password, password.as_bytes())
     }
@@ -84,7 +84,7 @@ impl User {
     ///     Ok("Your user email was changed".into())
     /// }
     /// ```
-    pub fn set_email(&mut self, email: String) -> Result<(), Error>{
+    pub fn set_email(&mut self, email: String) -> Result<(), Error> {
         if validate_email(&email) {
             self.email = email.to_lowercase();
             Ok(())
@@ -145,8 +145,8 @@ impl<'r> FromRequest<'r> for AdminUser {
     }
 }
 
-use std::{ops::*, result};
 use argon2::verify_encoded;
+use std::{ops::*, result};
 
 impl Deref for AdminUser {
     type Target = User;
