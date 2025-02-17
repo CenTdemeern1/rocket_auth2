@@ -1,5 +1,5 @@
 [package]
-name = "rocket_auth"
+name = "rocket_auth2"
 version = "0.5.1"
 authors = ["tvallotton@uc.cl", "michalmoczulski1a@gmail.com"]
 edition = "2021"

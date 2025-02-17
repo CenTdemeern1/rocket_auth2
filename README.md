@@ -1,3 +1,5 @@
+This is slightly more maintained fork of https://crates.io/crates/rocket_auth.
+
 # rocket_auth
 
 rocket_auth provides a ready-to-use backend agnostic API for authentication management.
