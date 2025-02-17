@@ -1,5 +1,5 @@
 use rocket::{form::*, get, post, response::Redirect, routes, State};
-use rocket_auth::{prelude::Error, *};
+use rocket_auth2::{prelude::Error, *};
 use rocket_dyn_templates::Template;
 use serde_json::json;
 use sqlx::*;

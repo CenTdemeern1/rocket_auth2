@@ -50,7 +50,7 @@ A working example:
 
 ```rust
 use rocket::{get, post, form::Form, routes};
-use rocket_auth::{Users, Error, Auth, Signup, Login};
+use rocket_auth2::{Users, Error, Auth, Signup, Login};
 
 #[post("/signup", data = "<form>")]
 async fn signup(form: Form<Signup>, auth: Auth<'_>) -> Result<&'static str, Error> {
@@ -93,7 +93,7 @@ So it is not necessary to retrieve Users when using `Auth`.
 A simple example of how to query a user with the `Users` struct:
 
 ```rust
-use rocket_auth::Users;
+use rocket_auth2::Users;
 
 #[get("/see-user/<id>")]
 async fn see_user(id: i32, users: &State<Users>) -> String {
@@ -137,7 +137,7 @@ It will restrict content, so that it can be viewed by admins only.
 
 ```rust
 # use rocket::*;
-# use rocket_auth::AdminUser;
+# use rocket_auth2::AdminUser;
 #[get("/admin-panel")]
 fn admin_panel(user: AdminUser) -> String {
     format!("Hello {}.", user.email());

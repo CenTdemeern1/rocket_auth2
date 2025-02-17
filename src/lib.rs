@@ -45,7 +45,7 @@
 //!  A working example:
 //! ```rust,no_run
 //! use rocket::{get, post, form::Form, routes};
-//! use rocket_auth::{Users, Error, Auth, Signup, Login};
+//! use rocket_auth2::{Users, Error, Auth, Signup, Login};
 //!
 //! #[post("/signup", data="<form>")]
 //! async fn signup(form: Form<Signup>, auth: Auth<'_>) -> Result<&'static str, Error> {
@@ -87,7 +87,7 @@
 //! ```rust
 //! # use rocket::{get, State};
 //! # use serde_json::json;
-//! use rocket_auth::Users;
+//! use rocket_auth2::Users;
 //!
 //! #[get("/see-user/<id>")]
 //! async fn see_user(id: i32, users: &State<Users>) -> String {
@@ -106,7 +106,7 @@
 //! Additionally, you can use it to render special content if the client is authenticated or not.
 //! ```rust
 //! # use rocket::*;
-//! # use rocket_auth::User;
+//! # use rocket_auth2::User;
 //! #[get("/private-content")]
 //! fn private_content(user: User) -> &'static str {
 //!     "If you can see this, you are logged in."
@@ -127,7 +127,7 @@
 //! It will restrict content, so that it can be viewed by admins only.
 //! ```
 //! # use rocket::*;
-//! # use rocket_auth::AdminUser;
+//! # use rocket_auth2::AdminUser;
 //! #[get("/admin-panel")]
 //! fn admin_panel(user: AdminUser) -> String {
 //!    format!("Hello {}.", user.email())
@@ -160,7 +160,7 @@ pub use error::Error;
 /// ```rust
 /// #
 /// # use rocket::{get};
-/// # use rocket_auth::User;
+/// # use rocket_auth2::User;
 /// #[get("/private-content")]
 /// fn private_content(user: User) -> &'static str {
 ///     "If you can see this, you are logged in."
@@ -181,7 +181,7 @@ pub struct User {
 /// It will restrict content, so that it can be viewed by admins only.
 /// ```
 /// # use rocket::*;
-/// # use rocket_auth::AdminUser;
+/// # use rocket_auth2::AdminUser;
 /// #[get("/admin-panel")]
 /// fn admin_panel(user: AdminUser) -> String {
 ///    format!("Hello {}.", user.email())

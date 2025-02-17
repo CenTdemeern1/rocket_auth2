@@ -93,7 +93,7 @@ features = ["tera"]
 version = ">=0.8.0"
 features = ["runtime-tokio-rustls"]
 
-[dev-dependencies.rocket_auth]
+[dev-dependencies.rocket_auth2]
 path = "../rocket_auth"
 features = [
     "sqlx-sqlite",

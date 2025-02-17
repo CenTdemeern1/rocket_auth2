@@ -10,7 +10,7 @@ impl Users {
     /// sessions will be stored on a concurrent HashMap. In order to have persistent sessions see
     /// the method [`open_redis`](crate::Users::open_redis).
     /// ```rust, no_run
-    /// # use rocket_auth::{Error, Users};
+    /// # use rocket_auth2::{Error, Users};
     /// # #[tokio::main]
     /// # async fn main() -> Result <(), Error> {
     /// let users = Users::open_sqlite("database.db").await?;
@@ -35,7 +35,7 @@ impl Users {
     /// already exists then this step is not necessary.
     /// ```rust
     ///  use sqlx::{sqlite::SqlitePool, Connection};
-    ///  use rocket_auth::{Users, Error};
+    ///  use rocket_auth2::{Users, Error};
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Error> {
     /// let mut conn = SqlitePool::connect("./database.db").await?;
@@ -50,7 +50,7 @@ impl Users {
     /// Opens a redis connection. It allows for sessions to be stored persistently across
     /// different launches. Note that persistent sessions also require a `secret_key` to be set in the [Rocket.toml](https://rocket.rs/v0.5-rc/guide/configuration/#configuration) configuration file.
     /// ```rust,
-    /// # use rocket_auth::{Users, Error};
+    /// # use rocket_auth2::{Users, Error};
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Error> {
     /// let mut users = Users::open_sqlite("database.db").await?;
@@ -75,7 +75,7 @@ impl Users {
     /// sessions will be stored on a concurrent HashMap. In order to have persistent sessions see
     /// the method [`open_redis`](Users::open_redis).
     /// ```rust, no_run
-    /// # use rocket_auth::{Error, Users};
+    /// # use rocket_auth2::{Error, Users};
     /// # #[tokio::main]
     /// # async fn main() -> Result <(), Error> {
     /// let users = Users::open_rusqlite("database.db")?;
@@ -101,7 +101,7 @@ impl Users {
     /// This method uses the [`sqlx`] crate.
     ///
     /// ```rust, no_run
-    /// # use rocket_auth::{Error, Users};
+    /// # use rocket_auth2::{Error, Users};
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Error> {
     /// let users = Users::open_postgres("postgres://postgres:password@localhost/test").await?;
@@ -128,7 +128,7 @@ impl Users {
     /// This method uses the [`sqlx`] crate.
     ///
     /// ```rust
-    /// # use rocket_auth::{Error, Users};
+    /// # use rocket_auth2::{Error, Users};
     /// # async fn func(DATABASE_URL: &str) -> Result<(), Error> {
     /// let users = Users::open_mysql(DATABASE_URL).await?;
     ///
@@ -153,7 +153,7 @@ impl Users {
     /// sessions will be stored on a concurrent HashMap. In order to have persistent sessions see
     /// the method [`open_redis`](Users::open_redis).
     /// ```rust, no_run
-    /// # use rocket_auth::{Error, Users};
+    /// # use rocket_auth2::{Error, Users};
     /// # #[tokio::main]
     /// # async fn main() -> Result <(), Error> {
     /// let users = Users::open_sled("database/")?;
@@ -173,7 +173,7 @@ impl Users {
     /// It queries a user by their email.
     /// ```
     /// # use rocket::{State, get};
-    /// # use rocket_auth::{Error, Users};
+    /// # use rocket_auth2::{Error, Users};
     /// #[get("/user-information/<email>")]
     /// async fn user_information(email: String, users: &State<Users>) -> Result<String, Error> {
     ///        
@@ -189,7 +189,7 @@ impl Users {
     /// It queries a user by their email.
     /// ```
     /// # use rocket::{State, get};
-    /// # use rocket_auth::{Error, Users};
+    /// # use rocket_auth2::{Error, Users};
     /// # #[get("/user-information/<email>")]
     /// # async fn user_information(email: String, users: &State<Users>) -> Result<(), Error> {
     ///  let user = users.get_by_id(3).await?;
@@ -205,7 +205,7 @@ impl Users {
     /// Inserts a new user in the database. It will fail if the user already exists.
     /// ```rust
     /// # use rocket::{State, post};
-    /// # use rocket_auth::{Error, Users};
+    /// # use rocket_auth2::{Error, Users};
     /// #[post("/create_admin/<email>/<password>")]
     /// async fn create_admin(email: String, password: String, users: &State<Users>) -> Result<String, Error> {
     ///     users.create_user(&email, &password, true).await?;
@@ -232,7 +232,7 @@ impl Users {
     /// To do that use [`Auth::delete`](crate::Auth::delete).
     /// ```rust
     /// use rocket::{get, State};
-    /// use rocket_auth::{Users, User, Error};
+    /// use rocket_auth2::{Users, User, Error};
     /// #[get("/delete_user/<id>")]
     /// async fn delete_user(id: i32, users: &State<Users>) -> Result<String, Error> {
     ///     users.delete(id).await?;
@@ -247,7 +247,7 @@ impl Users {
 
     /// Modifies a user in the database.
     /// ```
-    /// # use rocket_auth::{Users, Error};
+    /// # use rocket_auth2::{Users, Error};
     /// # async fn func(users: Users) -> Result<(), Error> {
     /// let mut user = users.get_by_id(4).await?;
     /// user.set_email("new@email.com".to_string());
@@ -263,7 +263,7 @@ impl Users {
 
 /// A `Users` instance can also be created from a database connection.
 /// ```rust
-/// use rocket_auth::{Users, Error};
+/// use rocket_auth2::{Users, Error};
 /// use tokio_postgres::NoTls;
 /// # async fn func() -> Result<(), Error> {
 /// let (client, connection) = tokio_postgres::connect("host=localhost user=postgres", NoTls).await?;
@@ -286,7 +286,7 @@ impl<Conn: 'static + DBConnection> From<Conn> for Users {
 /// Additionally, `Users` can be created from a tuple,
 /// where the first element is a database connection, and the second is a redis connection.
 /// ```rust
-/// # use rocket_auth::{Users, Error};
+/// # use rocket_auth2::{Users, Error};
 /// # extern crate tokio_postgres;
 /// # use tokio_postgres::NoTls;
 /// # extern crate redis;
