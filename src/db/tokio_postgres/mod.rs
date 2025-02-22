@@ -1,22 +1,70 @@
 use crate::prelude::*;
 mod sql;
+use crate::user::roles::Roles;
 use std::convert::{TryFrom, TryInto};
+use tokio_postgres::types::private::BytesMut;
+use tokio_postgres::types::{FromSql, IsNull, ToSql, Type};
 use tokio_postgres::Client;
+
+impl ToSql for Roles {
+    fn to_sql(
+        &self,
+        ty: &Type,
+        out: &mut BytesMut,
+    ) -> std::result::Result<IsNull, Box<dyn std::error::Error + Sync + Send>>
+    where
+        Self: Sized,
+    {
+        let bytes = bson::to_vec(self)?;
+        <Vec<u8> as ToSql>::to_sql(&bytes, ty, out)
+    }
+
+    fn accepts(ty: &Type) -> bool
+    where
+        Self: Sized,
+    {
+        <Vec<u8> as ToSql>::accepts(ty)
+    }
+
+    fn to_sql_checked(
+        &self,
+        ty: &Type,
+        out: &mut BytesMut,
+    ) -> std::result::Result<IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        let bytes = bson::to_vec(self)?;
+        <Vec<u8> as ToSql>::to_sql(&bytes, ty, out)
+    }
+}
+
+impl<'a> FromSql<'a> for Roles {
+    fn from_sql(
+        ty: &Type,
+        raw: &'a [u8],
+    ) -> std::result::Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        let bytes = <Vec<u8> as FromSql>::from_sql(ty, raw)?;
+        Ok(bson::from_slice(&bytes)?)
+    }
+
+    fn accepts(ty: &Type) -> bool {
+        <Vec<u8> as FromSql>::accepts(ty)
+    }
+}
+
 #[rocket::async_trait]
 impl DBConnection for Client {
     async fn init(&self) -> Result<()> {
         self.execute(sql::CREATE_TABLE, &[]).await?;
         Ok(())
     }
-    async fn create_user(&self, email: &str, hash: &str, is_admin: bool) -> Result<(), Error> {
-        self.execute(sql::INSERT_USER, &[&email, &hash, &is_admin])
+    async fn create_user(&self, email: &str, hash: &str, roles: &Roles) -> Result<(), Error> {
+        self.execute(sql::INSERT_USER, &[&email, &hash, roles])
             .await?;
         Ok(())
     }
     async fn update_user(&self, user: &User) -> Result<()> {
         self.execute(
             sql::UPDATE_USER,
-            &[&user.email, &user.password, &user.is_admin],
+            &[&user.email, &user.password, &user.roles],
         )
         .await?;
         Ok(())
@@ -47,7 +95,7 @@ impl TryFrom<tokio_postgres::Row> for User {
             id: row.get(0),
             email: row.get(1),
             password: row.get(2),
-            is_admin: row.get(3),
+            roles: row.get(3),
         })
     }
 }

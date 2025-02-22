@@ -1,5 +1,6 @@
 use super::auth::{validate_email, Auth};
 use super::rand_string;
+use std::borrow::Borrow;
 
 use crate::error;
 use crate::prelude::*;
@@ -92,16 +93,25 @@ impl User {
             throw!(Error::InvalidEmailAddressError)
         }
     }
+
+    pub fn is<Q>(&self, role: &Q) -> bool
+    where
+        Role: Borrow<Q>,
+        Q: Hash + Eq + ?Sized,
+    {
+        self.roles.contains(role)
+    }
 }
 
 use std::fmt::{self, Debug};
+use std::hash::Hash;
 
 impl Debug for User {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "User {{ id: {:?}, email: {:?}, is_admin: {:?}, password: \"*****\" }}",
-            self.id, self.email, self.is_admin
+            "User {{ id: {:?}, email: {:?}, roles: {:?}, password: \"*****\" }}",
+            self.id, self.email, self.roles
         )
     }
 }
@@ -137,7 +147,7 @@ impl<'r> FromRequest<'r> for AdminUser {
             Forward(x) => return Forward(x),
         };
         if let Some(user) = auth.get_user().await {
-            if user.is_admin {
+            if user.is(ADMIN_ROLE) {
                 return Outcome::Success(AdminUser(user));
             }
         }
@@ -145,6 +155,7 @@ impl<'r> FromRequest<'r> for AdminUser {
     }
 }
 
+use crate::user::roles::{Role, ADMIN_ROLE};
 use argon2::verify_encoded;
 use std::ops::*;
 
@@ -162,7 +173,7 @@ impl DerefMut for AdminUser {
 impl std::convert::TryFrom<User> for AdminUser {
     type Error = Error;
     fn try_from(value: User) -> Result<Self> {
-        if value.is_admin {
+        if value.is(ADMIN_ROLE) {
             Ok(AdminUser(value))
         } else {
             Err(Error::UnauthorizedError)

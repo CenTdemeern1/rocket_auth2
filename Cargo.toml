@@ -1,6 +1,6 @@
 [package]
 name = "rocket_auth2"
-version = "0.5.1"
+version = "0.6.1"
 authors = ["tvallotton@uc.cl", "michalmoczulski1a@gmail.com"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -34,7 +34,7 @@ thiserror = ">=2.0.11"
 async-trait = ">=0.1.86"
 fehler = ">=1.0.0"
 chrono = ">=0.4.39"
-validator = { version = ">=0.20.0", features = ["derive"] }
+validator = { version = ">=0.20.0", features = ["derive", "unic"] }
 futures = ">=0.3.31"
 bson = { version = "2.13", optional = true }
 sled = { version = ">=0.34", optional = true }

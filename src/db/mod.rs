@@ -12,11 +12,12 @@ mod sqlite;
 mod tokio_postgres;
 
 use crate::prelude::*;
+use crate::user::roles::Roles;
 
 #[rocket::async_trait]
 pub trait DBConnection: Send + Sync {
     async fn init(&self) -> Result<()>;
-    async fn create_user(&self, email: &str, hash: &str, is_admin: bool) -> Result<(), Error>;
+    async fn create_user(&self, email: &str, hash: &str, roles: &Roles) -> Result<(), Error>;
     async fn update_user(&self, user: &User) -> Result<()>;
     async fn delete_user_by_id(&self, user_id: i32) -> Result<()>;
     async fn delete_user_by_email(&self, email: &str) -> Result<()>;
@@ -29,8 +30,8 @@ impl<T: DBConnection> DBConnection for std::sync::Arc<T> {
     async fn init(&self) -> Result<()> {
         T::init(self).await
     }
-    async fn create_user(&self, email: &str, hash: &str, is_admin: bool) -> Result<(), Error> {
-        T::create_user(self, email, hash, is_admin).await
+    async fn create_user(&self, email: &str, hash: &str, roles: &Roles) -> Result<(), Error> {
+        T::create_user(self, email, hash, roles).await
     }
     async fn update_user(&self, user: &User) -> Result<()> {
         T::update_user(self, user).await
@@ -54,8 +55,8 @@ impl<T: DBConnection> DBConnection for tokio::sync::Mutex<T> {
     async fn init(&self) -> Result<()> {
         self.init().await
     }
-    async fn create_user(&self, email: &str, hash: &str, is_admin: bool) -> Result<(), Error> {
-        self.lock().await.create_user(email, hash, is_admin).await
+    async fn create_user(&self, email: &str, hash: &str, roles: &Roles) -> Result<(), Error> {
+        self.lock().await.create_user(email, hash, roles).await
     }
     async fn update_user(&self, user: &User) -> Result<()> {
         self.lock().await.update_user(user).await
