@@ -52,7 +52,15 @@ impl DBConnection for sled::Db {
 
         (&tree, &index).transaction(
             |(tree, index)| -> ConflictableTransactionResult<(), Error> {
-                index.insert(serialize_email(email), &serialize_id(id))?;
+                let serialized_email = serialize_email(email);
+
+                if index.get(serialized_email)?.is_some() {
+                    return Err(ConflictableTransactionError::Abort(
+                        Error::EmailAlreadyExists,
+                    ));
+                }
+
+                index.insert(serialized_email, &serialize_id(id))?;
 
                 let data = UserData {
                     email: email.to_string(),
