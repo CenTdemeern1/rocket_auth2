@@ -1,18 +1,42 @@
 mod sql;
 
 use crate::prelude::{Result, *};
+use crate::user::roles::Roles;
 use rocket::async_trait;
 use sql::*;
+use std::borrow::Cow;
 use tokio::sync::Mutex;
 
+#[cfg(feature = "rusqlite")]
+use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput};
+#[cfg(feature = "rusqlite")]
+use rusqlite::Row;
+#[cfg(feature = "rusqlite")]
+use rusqlite::*;
 #[cfg(feature = "rusqlite")]
 use std::convert::{TryFrom, TryInto};
 #[cfg(feature = "rusqlite")]
 use tokio::task::block_in_place;
+
 #[cfg(feature = "rusqlite")]
-use rusqlite::*;
+impl FromSql for Roles {
+    fn column_result(value: rusqlite::types::ValueRef<'_>) -> FromSqlResult<Self> {
+        match value {
+            rusqlite::types::ValueRef::Blob(bytes) => {
+                Ok(bson::from_slice(bytes).map_err(|e| FromSqlError::Other(Box::new(e)))?)
+            }
+            _ => Err(FromSqlError::InvalidType),
+        }
+    }
+}
+
 #[cfg(feature = "rusqlite")]
-use rusqlite::Row;
+impl ToSql for Roles {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        let bytes = bson::to_vec(self).map_err(|e| FromSqlError::Other(Box::new(e)))?;
+        Ok(bytes.into())
+    }
+}
 
 #[cfg(feature = "rusqlite")]
 impl<'a> TryFrom<&rusqlite::Row<'a>> for crate::User {
@@ -22,7 +46,7 @@ impl<'a> TryFrom<&rusqlite::Row<'a>> for crate::User {
             id: row.get(0)?,
             email: row.get(1)?,
             password: row.get(2)?,
-            is_admin: row.get(3)?,
+            roles: row.get(3)?,
         })
     }
 }
@@ -36,9 +60,9 @@ impl DBConnection for Mutex<rusqlite::Connection> {
         Ok(())
     }
 
-    async fn create_user(&self, email: &str, hash: &str, is_admin: bool) -> Result<()> {
+    async fn create_user(&self, email: &str, hash: &str, roles: &Roles) -> Result<()> {
         let conn = self.lock().await;
-        block_in_place(|| conn.execute(INSERT_USER, params![email, hash, is_admin]))?;
+        block_in_place(|| conn.execute(INSERT_USER, params![email, hash, roles]))?;
 
         Ok(())
     }
@@ -48,7 +72,7 @@ impl DBConnection for Mutex<rusqlite::Connection> {
         block_in_place(|| {
             conn.execute(
                 UPDATE_USER,
-                params![user.id, user.email, user.password, user.is_admin],
+                params![user.id, user.email, user.password, user.roles],
             )
         })?;
         Ok(())
@@ -92,7 +116,40 @@ impl DBConnection for Mutex<rusqlite::Connection> {
 }
 
 #[cfg(feature = "sqlx-sqlite")]
+use sqlx::encode::IsNull;
+#[cfg(feature = "sqlx-sqlite")]
+use sqlx::error::BoxDynError;
+use sqlx::sqlite::SqliteArgumentValue;
+#[cfg(feature = "sqlx-sqlite")]
 use sqlx::{sqlite::SqliteConnection, *};
+
+#[cfg(feature = "sqlx-sqlite")]
+impl Type<Sqlite> for Roles {
+    fn type_info() -> <Sqlite as Database>::TypeInfo {
+        <[u8] as Type<Sqlite>>::type_info()
+    }
+}
+
+#[cfg(feature = "sqlx-sqlite")]
+impl<'q> Encode<'q, Sqlite> for Roles {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Sqlite as Database>::ArgumentBuffer<'q>,
+    ) -> std::result::Result<IsNull, BoxDynError> {
+        let bytes = bson::to_vec(self)?;
+        buf.push(SqliteArgumentValue::Blob(Cow::Owned(bytes)));
+        Ok(IsNull::No)
+    }
+}
+
+#[cfg(feature = "sqlx-sqlite")]
+impl<'q> Decode<'q, Sqlite> for Roles {
+    fn decode(value: <Sqlite as Database>::ValueRef<'q>) -> std::result::Result<Self, BoxDynError> {
+        let bytes = <&[u8] as Decode<Sqlite>>::decode(value)?;
+        Ok(bson::from_slice(bytes)?)
+    }
+}
+
 #[cfg(feature = "sqlx-sqlite")]
 #[async_trait]
 impl DBConnection for Mutex<SqliteConnection> {
@@ -102,12 +159,12 @@ impl DBConnection for Mutex<SqliteConnection> {
         println!("table created");
         Ok(())
     }
-    async fn create_user(&self, email: &str, hash: &str, is_admin: bool) -> Result<()> {
+    async fn create_user(&self, email: &str, hash: &str, roles: &Roles) -> Result<()> {
         let mut db = self.lock().await;
         query(INSERT_USER)
             .bind(email)
             .bind(hash)
-            .bind(is_admin)
+            .bind(roles)
             .execute(&mut *db)
             .await?;
         Ok(())
@@ -118,7 +175,7 @@ impl DBConnection for Mutex<SqliteConnection> {
             .bind(user.id)
             .bind(&user.email)
             .bind(&user.password)
-            .bind(user.is_admin)
+            .bind(&user.roles)
             .execute(&mut *db)
             .await?;
         Ok(())
@@ -165,11 +222,11 @@ impl DBConnection for SqlitePool {
             .await?;
         Ok(())
     }
-    async fn create_user(&self, email: &str, hash: &str, is_admin: bool) -> Result<()> {
+    async fn create_user(&self, email: &str, hash: &str, roles: &Roles) -> Result<()> {
         query(INSERT_USER)
             .bind(email)
             .bind(hash)
-            .bind(is_admin)
+            .bind(roles)
             .execute(self)
             .await?;
         Ok(())
@@ -179,7 +236,7 @@ impl DBConnection for SqlitePool {
             .bind(user.id)
             .bind(&user.email)
             .bind(&user.password)
-            .bind(user.is_admin)
+            .bind(&user.roles)
             .execute(self)
             .await?;
         Ok(())

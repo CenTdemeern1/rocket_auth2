@@ -4,7 +4,33 @@ use sql::*;
 
 use sqlx::mysql::MySqlPool;
 
+use crate::user::roles::Roles;
+use sqlx::encode::IsNull;
+use sqlx::error::BoxDynError;
 use sqlx::*;
+
+impl Type<MySql> for Roles {
+    fn type_info() -> <MySql as Database>::TypeInfo {
+        <[u8] as Type<MySql>>::type_info()
+    }
+}
+
+impl<'q> Encode<'q, MySql> for Roles {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <MySql as Database>::ArgumentBuffer<'q>,
+    ) -> std::result::Result<IsNull, BoxDynError> {
+        let bytes = bson::to_vec(self)?;
+        <&[u8] as Encode<MySql>>::encode_by_ref(&bytes.as_slice(), buf)
+    }
+}
+
+impl<'q> Decode<'q, MySql> for Roles {
+    fn decode(value: <MySql as Database>::ValueRef<'q>) -> std::result::Result<Self, BoxDynError> {
+        let bytes = <&[u8] as Decode<MySql>>::decode(value)?;
+        Ok(bson::from_slice(bytes)?)
+    }
+}
 
 #[rocket::async_trait]
 impl DBConnection for MySqlPool {
@@ -12,11 +38,11 @@ impl DBConnection for MySqlPool {
         query(CREATE_TABLE).execute(self).await?;
         Ok(())
     }
-    async fn create_user(&self, email: &str, hash: &str, is_admin: bool) -> Result<()> {
+    async fn create_user(&self, email: &str, hash: &str, roles: &Roles) -> Result<()> {
         query(INSERT_USER)
             .bind(email)
             .bind(hash)
-            .bind(is_admin)
+            .bind(roles)
             .execute(self)
             .await?;
         Ok(())
@@ -25,7 +51,7 @@ impl DBConnection for MySqlPool {
         query(UPDATE_USER)
             .bind(&user.email)
             .bind(&user.password)
-            .bind(user.is_admin)
+            .bind(bson::to_vec(&user.roles).unwrap())
             .bind(user.id)
             .execute(self)
             .await?;

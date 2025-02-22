@@ -155,6 +155,7 @@ pub use prelude::*;
 pub use crate::user::auth::Auth;
 pub use cookies::Session;
 pub use error::Error;
+pub use user::roles::{Role, Roles, ADMIN_ROLE};
 
 /// The `User` guard can be used to restrict content, so that it can only be viewed by authenticated users.
 /// ```rust
@@ -168,11 +169,11 @@ pub use error::Error;
 /// # fn main() {}
 /// ```
 #[cfg_attr(feature = "sqlx", derive(sqlx::FromRow))]
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct User {
     pub id: i32,
     email: String,
-    pub is_admin: bool,
+    pub roles: Roles,
     #[serde(skip_serializing)]
     password: String,
 }
@@ -187,7 +188,7 @@ pub struct User {
 ///    format!("Hello {}.", user.email())
 /// }
 /// ```
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct AdminUser(User);
 
 impl Debug for AdminUser {

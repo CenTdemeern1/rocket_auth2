@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::user::roles::Roles;
 use sled::transaction::{ConflictableTransactionError, ConflictableTransactionResult};
 use sled::Transactional;
 
@@ -9,7 +10,7 @@ const EMAIL_INDEX_NAME: &str = "users_emails";
 struct UserData {
     email: String,
     hash: String,
-    is_admin: bool,
+    roles: Roles,
 }
 
 fn map_error(e: impl Into<Error>) -> ConflictableTransactionError<Error> {
@@ -44,7 +45,7 @@ impl DBConnection for sled::Db {
         Ok(())
     }
 
-    async fn create_user(&self, email: &str, hash: &str, is_admin: bool) -> Result<()> {
+    async fn create_user(&self, email: &str, hash: &str, roles: &Roles) -> Result<()> {
         let id: i32 = self.generate_id()? as i32;
         let tree = self.open_tree(TABLE_NAME)?;
         let index = self.open_tree(TABLE_NAME)?;
@@ -56,7 +57,7 @@ impl DBConnection for sled::Db {
                 let data = UserData {
                     email: email.to_string(),
                     hash: hash.to_string(),
-                    is_admin,
+                    roles: roles.clone(),
                 };
                 tree.insert(&serialize_id(id), serialize_data(&data))?;
 
@@ -76,7 +77,7 @@ impl DBConnection for sled::Db {
                 let data = UserData {
                     email: user.email.clone(),
                     hash: user.password.clone(),
-                    is_admin: user.is_admin,
+                    roles: user.roles.clone(),
                 };
 
                 let old_entry = tree.insert(&serialize_id(user.id), serialize_data(&data))?;
@@ -145,7 +146,7 @@ impl DBConnection for sled::Db {
         Ok(User {
             id: user_id,
             email: user.email,
-            is_admin: user.is_admin,
+            roles: user.roles,
             password: user.hash,
         })
     }
@@ -167,7 +168,7 @@ impl DBConnection for sled::Db {
                 Ok(User {
                     id: deserialize_id(&id),
                     email: user.email,
-                    is_admin: user.is_admin,
+                    roles: user.roles,
                     password: user.hash,
                 })
             },

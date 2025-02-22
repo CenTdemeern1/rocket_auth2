@@ -1,7 +1,7 @@
 use super::rand_string;
 use crate::db::DBConnection;
 use crate::prelude::*;
-use std::path::Path;
+use crate::user::roles::Roles;
 
 impl Users {
     /// It creates a `Users` instance by connecting  it to a sqlite database.
@@ -18,7 +18,7 @@ impl Users {
     /// rocket::build()
     ///     .manage(users)
     ///     .launch()
-    ///     .await;
+    ///     .await.expect("failed launch");
     /// # Ok(()) }
     /// ```
     #[cfg(feature = "sqlx-sqlite")]
@@ -49,7 +49,7 @@ impl Users {
     }
     /// Opens a redis connection. It allows for sessions to be stored persistently across
     /// different launches. Note that persistent sessions also require a `secret_key` to be set in the [Rocket.toml](https://rocket.rs/v0.5-rc/guide/configuration/#configuration) configuration file.
-    /// ```rust,
+    /// ```rust, no_run
     /// # use rocket_auth2::{Users, Error};
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Error> {
@@ -83,11 +83,11 @@ impl Users {
     /// rocket::build()
     ///     .manage(users)
     ///     .launch()
-    ///     .await;
+    ///     .await.expect("failed launch");
     /// # Ok(()) }
     /// ```
     #[cfg(feature = "rusqlite")]
-    pub fn open_rusqlite(path: impl AsRef<Path>) -> Result<Self, Error> {
+    pub fn open_rusqlite(path: impl AsRef<std::path::Path>) -> Result<Self, Error> {
         use tokio::sync::Mutex;
         let users = Users {
             conn: Box::new(Mutex::new(rusqlite::Connection::open(path)?)),
@@ -108,7 +108,7 @@ impl Users {
     ///
     /// rocket::build()
     ///     .manage(users)
-    ///     .launch();
+    ///     .launch().await.expect("failed launch");
     /// # Ok(()) }
     ///
     /// ```
@@ -129,12 +129,12 @@ impl Users {
     ///
     /// ```rust
     /// # use rocket_auth2::{Error, Users};
-    /// # async fn func(DATABASE_URL: &str) -> Result<(), Error> {
-    /// let users = Users::open_mysql(DATABASE_URL).await?;
+    /// # async fn func(database_url: &str) -> Result<(), Error> {
+    /// let users = Users::open_mysql(database_url).await?;
     ///
     /// rocket::build()
     ///     .manage(users)
-    ///     .launch();
+    ///     .launch().await.expect("failed launch");
     /// # Ok(()) }
     ///
     /// ```
@@ -165,7 +165,7 @@ impl Users {
     /// # Ok(()) }
     /// ```
     #[cfg(feature = "sled")]
-    pub fn open_sled(path: impl AsRef<Path>) -> Result<Self, Error> {
+    pub fn open_sled(path: impl AsRef<std::path::Path>) -> Result<Self, Error> {
         let db = sled::open(path)?;
         Ok(db.into())
     }
@@ -205,10 +205,10 @@ impl Users {
     /// Inserts a new user in the database. It will fail if the user already exists.
     /// ```rust
     /// # use rocket::{State, post};
-    /// # use rocket_auth2::{Error, Users};
+    /// # use rocket_auth2::{Error, Users, Roles, ADMIN_ROLE};
     /// #[post("/create_admin/<email>/<password>")]
     /// async fn create_admin(email: String, password: String, users: &State<Users>) -> Result<String, Error> {
-    ///     users.create_user(&email, &password, true).await?;
+    /// users.create_user(&email, &password, &Roles::from_strs(&[ADMIN_ROLE])).await?;
     ///     Ok("User created successfully".into())
     /// }
     /// # fn main() {}
@@ -217,13 +217,13 @@ impl Users {
         &self,
         email: &str,
         password: &str,
-        is_admin: bool,
+        roles: &Roles,
     ) -> Result<(), Error> {
         let password = password.as_bytes();
         let salt = rand_string(30);
         let config = argon2::Config::default();
         let hash = argon2::hash_encoded(password, salt.as_bytes(), &config).unwrap();
-        self.conn.create_user(email, &hash, is_admin).await?;
+        self.conn.create_user(email, &hash, roles).await?;
 
         Ok(())
     }
@@ -248,10 +248,10 @@ impl Users {
     /// Modifies a user in the database.
     /// ```
     /// # use rocket_auth2::{Users, Error};
-    /// # async fn func(users: Users) -> Result<(), Error> {
+    /// # async fn func(users: Users) -> Result<(), Box<dyn std::error::Error>> {
     /// let mut user = users.get_by_id(4).await?;
-    /// user.set_email("new@email.com".to_string());
-    /// user.set_password("new password");
+    /// user.set_email("new@email.com".to_string())?;
+    /// user.set_password("new password")?;
     /// users.modify(&user).await?;
     /// # Ok(())}
     /// ```
@@ -270,7 +270,7 @@ impl Users {
 /// let users: Users = client.into();
 /// // we create the user table in the
 /// // database if it does not exist.
-/// users.create_table();
+/// users.create_table().await?;
 /// # Ok(())}
 /// ```
 
@@ -297,7 +297,7 @@ impl<Conn: 'static + DBConnection> From<Conn> for Users {
 /// let users: Users = (db_client, redis_client).into();
 /// // we create the user table in the
 /// // database if it does not exist.
-/// users.create_table();
+/// users.create_table().await?;
 /// # Ok(())}
 /// ```
 impl<T0: 'static + DBConnection, T1: 'static + SessionManager> From<(T0, T1)> for Users {

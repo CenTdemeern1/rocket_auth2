@@ -3,19 +3,19 @@ CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR (254) UNIQUE NOT NULL,
 	password VARCHAR ( 255 ) NOT NULL,
-    is_admin BOOLEAN DEFAULT FALSE
+    roles BLOB NOT NULL
 );
 ";
 
 pub(crate) const INSERT_USER: &str = "
-INSERT INTO users (email, password, is_admin) VALUES (?, ?, ?);
+INSERT INTO users (email, password, roles) VALUES (?, ?, ?);
 ";
 
 pub(crate) const UPDATE_USER: &str = "
 UPDATE users SET 
     email = ?,
     password = ?,
-    is_admin = ?
+    roles = ?
 WHERE
     id = ?
 ";

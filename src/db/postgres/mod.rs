@@ -4,19 +4,46 @@ use sql::*;
 
 use sqlx::postgres::PgPool;
 
+use crate::user::roles::Roles;
+use sqlx::encode::IsNull;
+use sqlx::error::BoxDynError;
 use sqlx::*;
 
+impl Type<Postgres> for Roles {
+    fn type_info() -> <Postgres as Database>::TypeInfo {
+        <[u8] as Type<Postgres>>::type_info()
+    }
+}
+
+impl<'q> Encode<'q, Postgres> for Roles {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Postgres as Database>::ArgumentBuffer<'q>,
+    ) -> std::result::Result<IsNull, BoxDynError> {
+        let bytes = bson::to_vec(self)?;
+        <&[u8] as Encode<Postgres>>::encode_by_ref(&bytes.as_slice(), buf)
+    }
+}
+
+impl<'q> Decode<'q, Postgres> for Roles {
+    fn decode(
+        value: <Postgres as Database>::ValueRef<'q>,
+    ) -> std::result::Result<Self, BoxDynError> {
+        let bytes = <&[u8] as Decode<Postgres>>::decode(value)?;
+        Ok(bson::from_slice(bytes)?)
+    }
+}
 #[rocket::async_trait]
 impl DBConnection for PgPool {
     async fn init(&self) -> Result<()> {
         query(CREATE_TABLE).execute(self).await?;
         Ok(())
     }
-    async fn create_user(&self, email: &str, hash: &str, is_admin: bool) -> Result<()> {
+    async fn create_user(&self, email: &str, hash: &str, roles: &Roles) -> Result<()> {
         query(INSERT_USER)
             .bind(email)
             .bind(hash)
-            .bind(is_admin)
+            .bind(roles)
             .execute(self)
             .await?;
         Ok(())
@@ -26,7 +53,7 @@ impl DBConnection for PgPool {
             .bind(user.id)
             .bind(&user.email)
             .bind(&user.password)
-            .bind(user.is_admin)
+            .bind(&user.roles)
             .execute(self)
             .await?;
 
