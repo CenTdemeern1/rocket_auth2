@@ -34,3 +34,6 @@ DELETE FROM users WHERE id = ?;
 pub(crate) const REMOVE_BY_EMAIL: &str = "
 DELETE FROM users WHERE email = ?;
 ";
+pub(crate) const GET_ALL: &str = "
+SELECT id FROM users;
+";

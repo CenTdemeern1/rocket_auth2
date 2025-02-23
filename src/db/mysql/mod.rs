@@ -78,4 +78,8 @@ impl DBConnection for MySqlPool {
             .await?;
         Ok(user)
     }
+    async fn get_all_ids(&self) -> Result<Vec<i32>> {
+        let ids = query_scalar(GET_ALL).fetch_all(self).await?;
+        Ok(ids)
+    }
 }

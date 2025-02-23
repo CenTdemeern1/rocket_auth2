@@ -113,6 +113,17 @@ impl DBConnection for Mutex<rusqlite::Connection> {
         })?;
         Ok(user)
     }
+    async fn get_all_ids(&self) -> Result<Vec<i32>> {
+        let conn = self.lock().await;
+        let mut stmt = conn.prepare(GET_ALL)?;
+        let ids = block_in_place(|| -> Result<Vec<i32>> {
+            Ok(stmt
+                .query_map([], |row| row.get::<usize, i32>(0))?
+                .flatten()
+                .collect())
+        })?;
+        Ok(ids)
+    }
 }
 
 #[cfg(feature = "sqlx-sqlite")]
@@ -212,6 +223,11 @@ impl DBConnection for Mutex<SqliteConnection> {
             .await?;
         Ok(user)
     }
+    async fn get_all_ids(&self) -> Result<Vec<i32>> {
+        let mut db = self.lock().await;
+        let ids = query_scalar(GET_ALL).fetch_all(&mut *db).await?;
+        Ok(ids)
+    }
 }
 #[cfg(feature = "sqlx-sqlite")]
 #[rocket::async_trait]
@@ -266,5 +282,9 @@ impl DBConnection for SqlitePool {
         let user = query_as(SELECT_BY_EMAIL).bind(email).fetch_one(self).await;
         println!("user: {:?}", user);
         Ok(user?)
+    }
+    async fn get_all_ids(&self) -> Result<Vec<i32>> {
+        let ids = query_scalar(GET_ALL).fetch_all(self).await?;
+        Ok(ids)
     }
 }

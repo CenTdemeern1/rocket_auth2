@@ -164,7 +164,7 @@ impl<'a> Auth<'a> {
     /// # use rocket_auth2::{Auth, Signup};
     /// # use std::time::Duration;
     /// #[post("/signup", data="<form>")]
-    /// async fn signup_for(form: Form<Signup>, auth: Auth) {
+    /// async fn signup_for(form: Form<Signup>, auth: Auth<'_>) {
     ///     let one_hour = Duration::from_secs(60 * 60);
     ///     auth.signup_for(&form, one_hour).await.expect("");
     /// }

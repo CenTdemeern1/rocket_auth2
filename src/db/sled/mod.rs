@@ -184,4 +184,14 @@ impl DBConnection for sled::Db {
 
         Ok(user)
     }
+
+    async fn get_all_ids(&self) -> Result<Vec<i32>> {
+        let tree = self.open_tree(TABLE_NAME)?;
+        Ok(tree
+            .iter()
+            .keys()
+            .flatten()
+            .map(|id| deserialize_id(&id))
+            .collect())
+    }
 }
