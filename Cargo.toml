@@ -21,7 +21,7 @@ all-features = true
 sqlx-sqlite = ["sqlx/sqlite"]
 sqlx-postgres = ["sqlx/postgres"]
 sqlx-mysql = ["sqlx/mysql"]
-sled = ["dep:sled", "dep:bson"]
+sled = ["dep:sled"]
 
 
 [dependencies]
@@ -36,7 +36,7 @@ fehler = ">=1.0.0"
 chrono = ">=0.4.39"
 validator = { version = ">=0.20.0", features = ["derive", "unic"] }
 futures = ">=0.3.31"
-bson = { version = "2.13", optional = true }
+bson = { version = "2.13" }
 sled = { version = ">=0.34", optional = true }
 
 
