@@ -22,7 +22,7 @@ To use `rocket_auth2` include it as a dependency in your Cargo.toml file:
 
 ```ini
 [dependencies.rocket_auth2]
-version = "0.6.1"
+version = "0.6.2"
 features = ["sqlx-sqlite"]
 ```
 
