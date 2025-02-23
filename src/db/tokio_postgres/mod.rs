@@ -86,6 +86,15 @@ impl DBConnection for Client {
         let user = self.query_one(sql::SELECT_BY_EMAIL, &[&email]).await?;
         user.try_into()
     }
+
+    async fn get_all_ids(&self) -> Result<Vec<i32>> {
+        let rows = self.query(sql::GET_ALL, &[]).await?;
+        let ids = rows
+            .into_iter()
+            .map(|row| row.get::<usize, i32>(0))
+            .collect();
+        Ok(ids)
+    }
 }
 
 impl TryFrom<tokio_postgres::Row> for User {

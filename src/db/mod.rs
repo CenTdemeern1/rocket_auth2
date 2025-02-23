@@ -23,6 +23,7 @@ pub trait DBConnection: Send + Sync {
     async fn delete_user_by_email(&self, email: &str) -> Result<()>;
     async fn get_user_by_id(&self, user_id: i32) -> Result<User>;
     async fn get_user_by_email(&self, email: &str) -> Result<User>;
+    async fn get_all_ids(&self) -> Result<Vec<i32>>;
 }
 
 #[rocket::async_trait]
@@ -48,6 +49,9 @@ impl<T: DBConnection> DBConnection for std::sync::Arc<T> {
     async fn get_user_by_email(&self, email: &str) -> Result<User> {
         T::get_user_by_email(self, email).await
     }
+    async fn get_all_ids(&self) -> Result<Vec<i32>> {
+        T::get_all_ids(self).await
+    }
 }
 
 #[rocket::async_trait]
@@ -72,5 +76,8 @@ impl<T: DBConnection> DBConnection for tokio::sync::Mutex<T> {
     }
     async fn get_user_by_email(&self, email: &str) -> Result<User> {
         self.lock().await.get_user_by_email(email).await
+    }
+    async fn get_all_ids(&self) -> Result<Vec<i32>> {
+        self.lock().await.get_all_ids().await
     }
 }

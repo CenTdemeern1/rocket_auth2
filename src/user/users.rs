@@ -227,6 +227,24 @@ impl Users {
         Ok(())
     }
 
+    /// Returns identifiers of all users present in database
+    /// ```rust
+    /// # use rocket::{State, get};
+    /// # use rocket_auth2::{Error, Users, Roles, ADMIN_ROLE};
+    /// #[get("/manage_users")]
+    /// async fn create_admin(users: &State<Users>) -> Result<String, Error> {
+    ///     for id in users.get_all().await? {
+    ///         let user = users.get_by_id(id).await?;
+    ///         //...
+    ///     }
+    ///     Ok("here will be admin panel".to_string())
+    /// }
+    /// # fn main() {}
+    /// ```
+    pub async fn get_all(&self) -> Result<Vec<i32>> {
+        self.conn.get_all_ids().await
+    }
+
     /// Deletes a user from de database. Note that this method won't delete the session.
     /// To do that use [`Auth::delete`](crate::Auth::delete).
     /// ```rust
