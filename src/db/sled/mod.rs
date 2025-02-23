@@ -48,7 +48,7 @@ impl DBConnection for sled::Db {
     async fn create_user(&self, email: &str, hash: &str, roles: &Roles) -> Result<()> {
         let id: i32 = self.generate_id()? as i32;
         let tree = self.open_tree(TABLE_NAME)?;
-        let index = self.open_tree(TABLE_NAME)?;
+        let index = self.open_tree(EMAIL_INDEX_NAME)?;
 
         (&tree, &index).transaction(
             |(tree, index)| -> ConflictableTransactionResult<(), Error> {
@@ -78,7 +78,7 @@ impl DBConnection for sled::Db {
 
     async fn update_user(&self, user: &User) -> Result<()> {
         let tree = self.open_tree(TABLE_NAME)?;
-        let index = self.open_tree(TABLE_NAME)?;
+        let index = self.open_tree(EMAIL_INDEX_NAME)?;
 
         (&tree, &index).transaction(
             |(tree, index)| -> ConflictableTransactionResult<(), Error> {
@@ -106,7 +106,7 @@ impl DBConnection for sled::Db {
 
     async fn delete_user_by_id(&self, user_id: i32) -> Result<()> {
         let tree = self.open_tree(TABLE_NAME)?;
-        let index = self.open_tree(TABLE_NAME)?;
+        let index = self.open_tree(EMAIL_INDEX_NAME)?;
 
         (&tree, &index).transaction(
             |(tree, index)| -> ConflictableTransactionResult<(), Error> {
@@ -126,7 +126,7 @@ impl DBConnection for sled::Db {
 
     async fn delete_user_by_email(&self, email: &str) -> Result<()> {
         let tree = self.open_tree(TABLE_NAME)?;
-        let index = self.open_tree(TABLE_NAME)?;
+        let index = self.open_tree(EMAIL_INDEX_NAME)?;
 
         (&tree, &index).transaction(
             |(tree, index)| -> ConflictableTransactionResult<(), Error> {
@@ -161,7 +161,7 @@ impl DBConnection for sled::Db {
 
     async fn get_user_by_email(&self, email: &str) -> Result<User> {
         let tree = self.open_tree(TABLE_NAME)?;
-        let index = self.open_tree(TABLE_NAME)?;
+        let index = self.open_tree(EMAIL_INDEX_NAME)?;
 
         let user = (&tree, &index).transaction(
             |(tree, index)| -> ConflictableTransactionResult<User, Error> {
