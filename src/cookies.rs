@@ -1,8 +1,8 @@
+use crate::error;
 use crate::prelude::*;
 use rocket::http::{CookieJar, Status};
 use rocket::request::{FromRequest, Outcome, Request};
 use serde_json::from_str;
-use crate::error;
 
 /// The Session guard can be used to retrieve user session data.
 /// Unlike `User`, using session does not verify that the session data is
@@ -25,7 +25,6 @@ pub struct Session {
     pub auth_key: String,
 }
 
-
 #[async_trait]
 impl<'r> FromRequest<'r> for Session {
     type Error = Error;
@@ -39,8 +38,7 @@ impl<'r> FromRequest<'r> for Session {
         }
     }
 }
-#[throws(as Option)]
-fn get_session(cookies: &CookieJar) -> Session {
+fn get_session(cookies: &CookieJar) -> Option<Session> {
     let session = cookies.get_private("rocket_auth")?;
-    from_str(session.value()).ok()?
+    from_str(session.value()).ok()
 }

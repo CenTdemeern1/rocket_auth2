@@ -85,12 +85,12 @@ impl User {
     ///     Ok("Your user email was changed".into())
     /// }
     /// ```
-    pub fn set_email(&mut self, email: String) -> Result<(), Error> {
+    pub fn set_email(&mut self, email: String) -> Result<()> {
         if validate_email(&email) {
             self.email = email.to_lowercase();
             Ok(())
         } else {
-            throw!(Error::InvalidEmailAddressError)
+            Err(Error::InvalidEmailAddressError)
         }
     }
 

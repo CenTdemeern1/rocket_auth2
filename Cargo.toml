@@ -32,7 +32,6 @@ serde_json = ">=1.0.138"
 chashmap = ">=2.2.2"
 thiserror = ">=2.0.11"
 async-trait = ">=0.1.86"
-fehler = ">=1.0.0"
 chrono = ">=0.4.39"
 validator = { version = ">=0.20.0", features = ["derive", "unic"] }
 futures = ">=0.3.31"

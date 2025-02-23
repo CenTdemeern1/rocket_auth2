@@ -22,12 +22,11 @@ impl Users {
     /// # Ok(()) }
     /// ```
     #[cfg(feature = "sqlx-sqlite")]
-    #[throws(Error)]
-    pub async fn open_sqlite(path: &str) -> Self {
+    pub async fn open_sqlite(path: &str) -> Result<Self> {
         let conn = sqlx::SqlitePool::connect(path).await?;
         let users: Users = conn.into();
         users.create_table().await?;
-        users
+        Ok(users)
     }
     /// Initializes the user table in the database. It won't drop the table if it already exists.
     /// It is necessary to call it explicitly when casting the `Users` struct from an already
@@ -239,10 +238,9 @@ impl Users {
     ///     Ok(String::from("The user has been deleted."))
     /// }
     /// ```
-    #[throws(Error)]
-    pub async fn delete(&self, id: i32) {
+    pub async fn delete(&self, id: i32) -> Result<()> {
         self.sess.remove(id)?;
-        self.conn.delete_user_by_id(id).await?;
+        self.conn.delete_user_by_id(id).await
     }
 
     /// Modifies a user in the database.
@@ -255,9 +253,8 @@ impl Users {
     /// users.modify(&user).await?;
     /// # Ok(())}
     /// ```
-    #[throws(Error)]
-    pub async fn modify(&self, user: &User) {
-        self.conn.update_user(user).await?;
+    pub async fn modify(&self, user: &User) -> Result<()> {
+        self.conn.update_user(user).await
     }
 }
 

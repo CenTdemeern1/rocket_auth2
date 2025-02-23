@@ -99,8 +99,7 @@ impl<'a> Auth<'a> {
     ///     auth.login(&form);
     /// }
     /// ```
-    #[throws(Error)]
-    pub async fn login(&self, form: &Login) {
+    pub async fn login(&self, form: &Login) -> Result<()> {
         let key = self.users.login(form).await?;
         let user = self.users.get_by_email(&form.email.to_lowercase()).await?;
         let session = Session {
@@ -111,6 +110,7 @@ impl<'a> Auth<'a> {
         };
         let to_str = format!("{}", json!(session));
         self.cookies.add_private(Cookie::new("rocket_auth", to_str));
+        Ok(())
     }
 
     /// Logs a user in for the specified period of time.
@@ -124,8 +124,7 @@ impl<'a> Auth<'a> {
     ///     auth.login_for(&form, one_hour);
     /// }
     /// ```
-    #[throws(Error)]
-    pub async fn login_for(&self, form: &Login, time: Duration) {
+    pub async fn login_for(&self, form: &Login, time: Duration) -> Result<()> {
         let key = self.users.login_for(form, time).await?;
         let user = self.users.get_by_email(&form.email.to_lowercase()).await?;
 
@@ -138,6 +137,7 @@ impl<'a> Auth<'a> {
         let to_str = format!("{}", json!(session));
         let cookie = Cookie::new("rocket_auth", to_str);
         self.cookies.add_private(cookie);
+        Ok(())
     }
 
     /// Creates a new user from a form or a json. The user will not be authenticated by default.
@@ -153,9 +153,8 @@ impl<'a> Auth<'a> {
     ///     Ok("Logged in")
     /// }
     /// ```
-    #[throws(Error)]
-    pub async fn signup(&self, form: &Signup) {
-        self.users.signup(form).await?;
+    pub async fn signup(&self, form: &Signup) -> Result<()> {
+        self.users.signup(form).await
     }
 
     /// Creates a new user from a form or a json.
@@ -165,15 +164,15 @@ impl<'a> Auth<'a> {
     /// # use rocket_auth2::{Auth, Signup};
     /// # use std::time::Duration;
     /// #[post("/signup", data="<form>")]
-    /// fn signup_for(form: Form<Signup>, auth: Auth) {
+    /// async fn signup_for(form: Form<Signup>, auth: Auth) {
     ///     let one_hour = Duration::from_secs(60 * 60);
-    ///     auth.signup_for(&form, one_hour);
+    ///     auth.signup_for(&form, one_hour).await.expect("");
     /// }
     /// ```
-    #[throws(Error)]
-    pub async fn signup_for(&self, form: &Signup, time: Duration) {
+    pub async fn signup_for(&self, form: &Signup, time: Duration) -> Result<()> {
         self.users.signup(form).await?;
         self.login_for(&form.clone().into(), time).await?;
+        Ok(())
     }
 
     ///
@@ -230,11 +229,11 @@ impl<'a> Auth<'a> {
     ///     auth.logout();
     /// }
     /// ```
-    #[throws(Error)]
-    pub fn logout(&self) {
+    pub fn logout(&self) -> Result<()> {
         let session = self.get_session()?;
         self.users.logout(session)?;
         self.cookies.remove_private(Cookie::build("rocket_auth"));
+        Ok(())
     }
     /// Deletes the account of the currently authenticated user.
     /// ```rust
@@ -245,14 +244,14 @@ impl<'a> Auth<'a> {
     ///     auth.delete();
     /// }
     /// ```
-    #[throws(Error)]
-    pub async fn delete(&self) {
+    pub async fn delete(&self) -> Result<()> {
         if self.is_auth() {
             let session = self.get_session()?;
             self.users.delete(session.id).await?;
             self.cookies.remove_private("rocket_auth");
+            Ok(())
         } else {
-            throw!(Error::UnauthenticatedError)
+            Err(Error::UnauthenticatedError)
         }
     }
 
@@ -274,7 +273,7 @@ impl<'a> Auth<'a> {
 
             Ok(())
         } else {
-            throw!(Error::UnauthorizedError)
+            Err(Box::new(Error::UnauthorizedError))
         }
     }
 
@@ -318,14 +317,13 @@ impl<'a> Auth<'a> {
     /// Useful for checking password before resetting email/password.
     /// To avoid bruteforcing this function should not be directly accessible from a route.
     /// Additionally, it is good to implement rate limiting on routes using this function.
-    #[throws(Error)]
-    pub async fn compare_password(&self, password: &str) -> bool {
+    pub async fn compare_password(&self, password: &str) -> Result<bool> {
         if self.is_auth() {
             let session = self.get_session()?;
             let user: User = self.users.get_by_id(session.id).await?;
-            user.compare_password(password)?
+            Ok(user.compare_password(password)?)
         } else {
-            throw!(Error::UnauthorizedError)
+            Err(Error::UnauthorizedError)
         }
     }
 }
