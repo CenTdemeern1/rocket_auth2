@@ -6,32 +6,37 @@ use redis::{Client, Commands};
 const YEAR_IN_SECS: u64 = 365 * 60 * 60 * 24;
 
 impl SessionManager for Client {
-    #[throws(Error)]
-    fn insert(&self, id: i32, key: String) {
+    fn insert(&self, id: i32, key: String) -> Result<()> {
         let mut cnn = self.get_connection()?;
-        cnn.set_ex(id, key, YEAR_IN_SECS)?;
+        let _: () = cnn.set_ex(id, key, YEAR_IN_SECS)?;
+        Ok(())
     }
-    #[throws(Error)]
-    fn insert_for(&self, id: i32, key: String, time: Duration) {
+
+    fn insert_for(&self, id: i32, key: String, time: Duration) -> Result<()> {
         let mut cnn = self.get_connection()?;
-        cnn.set_ex(id, key, time.as_secs())?;
+        let _: () = cnn.set_ex(id, key, time.as_secs())?;
+        Ok(())
     }
-    #[throws(Error)]
-    fn remove(&self, id: i32) {
+
+    fn remove(&self, id: i32) -> Result<()> {
         let mut cnn = self.get_connection()?;
-        cnn.del(id)?;
+        let _: () = cnn.del(id)?;
+        Ok(())
     }
-    #[throws(as Option)]
-    fn get(&self, id: i32) -> String {
+
+    fn get(&self, id: i32) -> Option<String> {
         let mut cnn = self.get_connection().ok()?;
         let key = cnn.get(id).ok()?;
         key
     }
-    #[throws(Error)]
-    fn clear_all(&self) {
+
+    fn clear_all(&self) -> Result<()> {
         let mut cnn = self.get_connection()?;
-        redis::Cmd::new().arg("FLUSHDB").execute(&mut cnn);
+        redis::Cmd::new().arg("FLUSHDB").exec(&mut cnn)?;
+        Ok(())
     }
-    #[throws(Error)]
-    fn clear_expired(&self) {}
+
+    fn clear_expired(&self) -> Result<()> {
+        Ok(())
+    }
 }

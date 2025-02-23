@@ -4,14 +4,23 @@ use crate::prelude::*;
 use chashmap::CHashMap;
 
 impl SessionManager for CHashMap<i32, AuthKey> {
-    #[throws(Error)]
-    fn insert(&self, id: i32, key: String) {
+    fn insert(&self, id: i32, key: String) -> Result<()> {
         self.insert(id, key.into());
+        Ok(())
     }
 
-    #[throws(Error)]
-    fn remove(&self, id: i32) {
+    fn insert_for(&self, id: i32, key: String, time: Duration) -> Result<()> {
+        let key = AuthKey {
+            expires: time.as_secs() as i64,
+            secret: key,
+        };
+        self.insert(id, key);
+        Ok(())
+    }
+
+    fn remove(&self, id: i32) -> Result<()> {
         self.remove(&id);
+        Ok(())
     }
 
     fn get(&self, id: i32) -> Option<String> {
@@ -19,24 +28,14 @@ impl SessionManager for CHashMap<i32, AuthKey> {
         Some(key.secret.clone())
     }
 
-    #[throws(Error)]
-    fn clear_all(&self) {
+    fn clear_all(&self) -> Result<()> {
         self.clear();
+        Ok(())
     }
 
-    #[throws(Error)]
-    fn insert_for(&self, id: i32, key: String, time: Duration) {
-        let key = AuthKey {
-            expires: time.as_secs() as i64,
-            secret: key,
-        };
-        self.insert(id, key);
-    }
-
-    #[throws(Error)]
-    fn clear_expired(&self) {
+    fn clear_expired(&self) -> Result<()> {
         let time = now();
         self.retain(|_, auth_key| auth_key.expires > time);
+        Ok(())
     }
 }
-
