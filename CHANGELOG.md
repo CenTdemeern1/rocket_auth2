@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- redis warnings fixed and crate updated
+
 ### Removed
 
 - 'fehler' dependency

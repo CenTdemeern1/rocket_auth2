@@ -8,19 +8,19 @@ const YEAR_IN_SECS: u64 = 365 * 60 * 60 * 24;
 impl SessionManager for Client {
     fn insert(&self, id: i32, key: String) -> Result<()> {
         let mut cnn = self.get_connection()?;
-        cnn.set_ex(id, key, YEAR_IN_SECS)?;
+        let _: () = cnn.set_ex(id, key, YEAR_IN_SECS)?;
         Ok(())
     }
 
     fn insert_for(&self, id: i32, key: String, time: Duration) -> Result<()> {
         let mut cnn = self.get_connection()?;
-        cnn.set_ex(id, key, time.as_secs())?;
+        let _: () = cnn.set_ex(id, key, time.as_secs())?;
         Ok(())
     }
 
     fn remove(&self, id: i32) -> Result<()> {
         let mut cnn = self.get_connection()?;
-        cnn.del(id)?;
+        let _: () = cnn.del(id)?;
         Ok(())
     }
 
@@ -32,7 +32,7 @@ impl SessionManager for Client {
 
     fn clear_all(&self) -> Result<()> {
         let mut cnn = self.get_connection()?;
-        redis::Cmd::new().arg("FLUSHDB").execute(&mut cnn);
+        redis::Cmd::new().arg("FLUSHDB").exec(&mut cnn)?;
         Ok(())
     }
 
