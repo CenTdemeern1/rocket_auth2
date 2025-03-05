@@ -35,17 +35,21 @@ impl Role {
 }
 
 #[derive(PartialEq, Eq, Clone, Serialize, Deserialize, Default)]
-pub struct Roles(HashSet<Role>);
+pub struct Roles {
+    roles: HashSet<Role>,
+}
 
 impl Debug for Roles {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
+        self.roles.fmt(f)
     }
 }
 
 impl Roles {
     pub fn new() -> Self {
-        Self(HashSet::new())
+        Self {
+            roles: HashSet::new(),
+        }
     }
 
     pub fn from_strs(roles: &[&str]) -> Self {
@@ -59,7 +63,7 @@ impl Roles {
     }
 
     pub fn insert(&mut self, role: Role) -> bool {
-        self.0.insert(role)
+        self.roles.insert(role)
     }
 
     pub fn remove<Q>(&mut self, role: &Q) -> bool
@@ -67,7 +71,7 @@ impl Roles {
         Role: Borrow<Q>,
         Q: Hash + Eq + ?Sized,
     {
-        self.0.remove(role)
+        self.roles.remove(role)
     }
 
     pub fn contains<Q>(&self, role: &Q) -> bool
@@ -75,6 +79,6 @@ impl Roles {
         Role: Borrow<Q>,
         Q: Hash + Eq + ?Sized,
     {
-        self.0.contains(role)
+        self.roles.contains(role)
     }
 }
